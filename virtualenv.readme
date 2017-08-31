@@ -1,0 +1,18 @@
+1) Install virtualenv:
+    $ sudo pip install virtualenv
+
+2) Create your virtual environment:
+    $ cd ~
+    $ mkdir -p .virtualenvs
+    for python3:
+        $ virtual -p python3 .virtualenvs/<name>
+    for python2:
+        $ virtual -p python2 .virtualenvs/<name>
+
+3) To activate your virtual environment
+    $ source .virtualenvs/<name>/bin/activate
+
+4) Install whatever packages you need:
+    (<name>) $ pip install <whatever>
+
+5) Later, if you close your terminal or something, to get back in, just follow step #3
