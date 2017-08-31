@@ -7,9 +7,9 @@ Here's how to get started with virtualenv:
     $ cd ~
     $ mkdir -p .virtualenvs
     for python3:
-        $ virtual -p python3 .virtualenvs/<name>
+        $ virtualenv -p python3 .virtualenvs/<name>
     for python2:
-        $ virtual -p python2 .virtualenvs/<name>
+        $ virtualenv -p python2 .virtualenvs/<name>
 
 3) To activate your virtual environment
     $ source .virtualenvs/<name>/bin/activate
