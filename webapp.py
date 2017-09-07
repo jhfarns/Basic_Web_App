@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 from bottle import route, run, request, response, template, TEMPLATE_PATH
-import randGen
+from utils import random_string
 
 def generate_cookie():
-    return randGen.randNum()
+    return random_string(16)
 
 @route('/hello')
 @route('/')
