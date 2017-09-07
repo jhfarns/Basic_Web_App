@@ -5,7 +5,7 @@
 	</head>
 	<body>
 		<h1>Squidge Welcomes you to Squindistries!</h1>
-		<form>
+		<form action="/api/user" method="post">
 			<fieldset>
 				<legend>Sign Up:</legend><br>
 				First Name:<br>
