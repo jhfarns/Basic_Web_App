@@ -1,18 +1,19 @@
 #!/usr/bin/env python
 
-from bottle import route, run, request, response
+from bottle import route, run, request, response, template, TEMPLATE_PATH
 import randGen
 
-value = randGen.randNum()
+def generate_cookie():
+    return randGen.randNum()
 
 @route('/hello')
 @route('/')
 def hello():
     if request.get_cookie('squidge'):
-        return 'Squidge welcomes you back to Squindistries!'
+        return template('Welcomeback')
     else:
-        response.set_cookie('squidge', value)
-    return "Squidge welcomes you to Squindistries!"
+        response.set_cookie('squidge', generate_cookie())
+    return template('LoginPage') 
 
 
 run(host='localhost', port=8080, debug=True)
