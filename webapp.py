@@ -30,6 +30,13 @@ def create_user_page():
 
 @get('/web/user/<id:int>')
 def get_user(id):
+    validate = users1.setdefault(id, [])
+    
+    if validate == []:
+        del users1[id]
+        return 'This is not in the dictionary'
+    else:
+        return users1[id]
 
     return users1[id]
 
@@ -70,4 +77,4 @@ def create_user():
     #    page for that user.
 
 
-run(host='0.0.0.0', port=8080, debug=True)
+run(host='localhost', port=8080, debug=True)
