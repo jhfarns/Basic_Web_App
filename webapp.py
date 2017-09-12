@@ -17,26 +17,27 @@ def generate_number():
 @route('/')
 def hello():
     if request.get_cookie('squidge'):
-        return template('Welcomeback')
+        return template('LoginPage')
     else:
         response.set_cookie('squidge', generate_cookie())
-    return template('LoginPage') 
+        return template('WelcomePage')
 
 
 @get('/web/user/create')
 def create_user_page():
-    return template('LoginPage')
+    return template('CreateUserPage')
 
 
 @get('/web/user/<id:int>')
 def get_user(id):
+    
     validate = users1.setdefault(id, [])
     
     if validate == []:
         del users1[id]
-        return 'This is not in the dictionary'
+        return redirect('/')
     else:
-        return users1[id]
+        return template('UserPage', name=users1[id][0], lastname=users1[id][1], email =users1[id][2], username=users1[id][3]) 
 
     return users1[id]
 
@@ -52,6 +53,7 @@ def get_user(id):
 
 @post('/api/user')
 def create_user():
+    
     firstname = request.forms.get('firstname')
     lastname = request.forms.get('lastname')
     email = request.forms.get('email')
