@@ -5,7 +5,7 @@
 	</head>
 	<body>
 		<h1>Squidge is happy to see you again!</h1>
-		<form>
+		<form action = 'web/login' method='post'>
 			<fieldset>
 				<legend>Log In:</legend><br>
 				Username:<br>

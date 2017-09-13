@@ -21,7 +21,19 @@ def hello():
     else:
         response.set_cookie('squidge', generate_cookie())
         return template('WelcomePage')
+@post('/web/login')
+def validate():
+    username = request.forms.get('username') 
+    password = request.forms.get('password')
 
+    list_of_keys = users1.keys()
+
+    for a in list_of_keys:
+        if username in users1[a]:
+            if password in users1[a]:
+                return redirect('/web/user/' + str(a))
+
+    return 'User not found'
 
 @get('/web/user/create')
 def create_user_page():
