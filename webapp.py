@@ -3,37 +3,93 @@
 from bottle import get, post, route, run, request, response, template, redirect
 from utils import random_string, random_number
 
-users = {92:'values', 1: 'this is the voice'}
 
-users1 = {}
+# dict from user_id to user object
+users = {}
+users['1234'] = {'First Name':'andrew','Last Name': 'harding', 'Email':'andrew@iscool.com','User Name': 'andrew','Password': 'hunter3'}
+
+# dict from session_id to user_id
+sessions = {}
+
+#dict from usernames to user_id object
+usernames = {}
 
 def generate_cookie():
     return random_string(16)
 
+
 def generate_number():
     return random_number()
+    
 
-@route('/hello')
+def redirect_to_login():
+    return redirect('/web/login')
+
+
+def redirect_to_user(user_id):
+    return redirect('/web/user/{}'.format(user_id))
+
+
+def login_required(fn):
+    def wrapped():
+        session_id = request.get_cookie("session")
+        if not session_id:
+            # no cookie; need to authenticate
+            return redirect_to_login()
+        user_id = sessions.get(session_id)
+        if not user_id:
+            # session_id isn't valid; need to authenticate
+            return redirect_to_login()
+        user = users.get(user_id)
+        if not user:
+            # session does not map to a valid user; need to authenticate
+            return redirect_to_login()
+        fn(user)
+    return wrapped
+
+
 @route('/')
-def hello():
-    if request.get_cookie('squidge'):
-        return template('LoginPage')
-    else:
-        response.set_cookie('squidge', generate_cookie())
-        return template('WelcomePage')
+@login_required
+def root(user):
+    return redirect_to_user(user.id)
+#    if request.get_cookie('squidge'):
+#        return template('LoginPage')
+#    else:
+#        response.set_cookie('squidge', generate_cookie())
+#        return template('WelcomePage')
+
+
+@get('/web/login')
+def login_page():
+    return template('LoginPage') 
+
 @post('/web/login')
-def validate():
-    username = request.forms.get('username') 
-    password = request.forms.get('password')
+def login():
+    # TODO(james):
+    # 0) change your user [] into a {}
+    # 1) look up user by username (requires you building
+    #    a mapping between username and users
+    # 2) if user doesn't exist, return an error
+    # 3) check password against user
+    # 4) if password doesn't match, return an error
+    # 5) if password matches, create new session id and
+    #    store the mapping between session id and user id
+    #    in the sessions dict.
+    # 6) set a cookie with the session id
+    # 7) redirect back to /
 
-    list_of_keys = users1.keys()
-
-    for a in list_of_keys:
-        if username in users1[a]:
-            if password in users1[a]:
-                return redirect('/web/user/' + str(a))
-
+#    username = request.forms.get('username') 
+#    password = request.forms.get('password')
+#
+#    list_of_keys = users.keys()
+#
+#    for a in list_of_keys:
+#        if username in users[a]:
+#            if password in users[a]:
+#                return redirect('/web/user/' + str(a))
+#
     return 'User not found'
+
 
 @get('/web/user/create')
 def create_user_page():
@@ -43,17 +99,18 @@ def create_user_page():
 @get('/web/user/<id:int>')
 def get_user(id):
     
-    validate = users1.setdefault(id, [])
+    validate = users.setdefault(id, [])
     
     if validate == []:
-        del users1[id]
+        del users[id]
         return redirect('/')
     else:
-        return template('UserPage', name=users1[id][0], lastname=users1[id][1], email =users1[id][2], username=users1[id][3]) 
+        return template('UserPage', name=users[id][0], lastname=users[id][1],
+                        email =users[id][2], username=users[id][3]) 
 
-    return users1[id]
+    return users[id]
 
-    # TODO(james):
+    # TODONE:
     # 1) look up the user in the in-memory dict using the id you got from
     #    bottle.
     # 2) if found, return a rendered user page, passing the user object into
@@ -73,17 +130,21 @@ def create_user():
     password = request.forms.get('password')
     user_id = generate_number()
 
-    global users1 
+    global users 
 
-    users1.setdefault(user_id, [])
-    
-    for addData in (firstname, lastname, email, username, password):
-        users1[user_id].append(addData)
+    users[user_id] = {'First Name': firstname, 'Last Name': lastname, 'Email': email,
+                      'Password': password}
+    usernames[username] = user_id
 
+#    users.setdefault(user_id, [])
+#    
+#    for addData in (firstname, lastname, email, username, password):
+#        users[user_id].append(addData)
+#
 
     return redirect('/web/user/' + str(user_id))
 
-    # TODO(james):
+    # TODONE:
     # 1) generate a random id for the new user
     # 2) store the new user in some in-memory dict that maps from the id
     #    to their user info.
