@@ -13,6 +13,7 @@ sessions = {}
 
 #dict from usernames to user_id object
 usernames = {}
+usernames['andrew'] = '1234'
 
 def generate_cookie():
     return random_string(16)
@@ -29,6 +30,9 @@ def redirect_to_login():
 def redirect_to_user(user_id):
     return redirect('/web/user/{}'.format(user_id))
 
+
+def redirect_to_root():
+    return redirect('/')
 
 def login_required(fn):
     def wrapped():
@@ -65,7 +69,26 @@ def login_page():
 
 @post('/web/login')
 def login():
-    # TODO(james):
+    username = request.forms.get('username')
+    password = request.forms.get('password')
+    validate_username = usernames.get(username)
+
+    if username ==  None: #explain the not statements we put in last time/ is there a 
+                          #better way to do this if statement?
+        return 'Wrong Username or Password'
+    else:
+        mapped_user_id = usernames[username]
+    if password != users[mapped_user_id]['Password']:
+        return 'Wrong Username or Password'
+    else:
+        session_id = generate_cookie()
+
+        sessions[session_id] = validate_username 
+        response.set_cookie('session', session_id)
+        redirect_to_root()
+    
+
+    # todo(james):
     # 0) change your user [] into a {}
     # 1) look up user by username (requires you building
     #    a mapping between username and users
@@ -88,7 +111,7 @@ def login():
 #            if password in users[a]:
 #                return redirect('/web/user/' + str(a))
 #
-    return 'User not found'
+    return 'user not found'
 
 
 @get('/web/user/create')
@@ -110,7 +133,7 @@ def get_user(id):
 
     return users[id]
 
-    # TODONE:
+    # todone:
     # 1) look up the user in the in-memory dict using the id you got from
     #    bottle.
     # 2) if found, return a rendered user page, passing the user object into
