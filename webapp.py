@@ -6,14 +6,35 @@ from utils import random_string, random_number
 
 # dict from user_id to user object
 users = {}
-users['1234'] = {'First Name':'andrew','Last Name': 'harding', 'Email':'andrew@iscool.com','User Name': 'andrew','Password': 'hunter3'}
+users[1234] = {'First Name':'andrew','Last Name': 'harding', 'Email':'andrew@iscool.com','User Name': 'andrew','Password': 'hunter3'}
 
 # dict from session_id to user_id
 sessions = {}
 
 #dict from usernames to user_id object
 usernames = {}
-usernames['andrew'] = '1234'
+usernames['andrew'] = 1234
+
+
+def create_user():
+    pass
+
+def login():
+
+    validate_username = usernames.get(username)
+
+    if validate_username  ==  None: 
+        return 'Wrong Username or Password'
+    else:
+        mapped_user_id = usernames[username]
+    if password != users[mapped_user_id]['Password']:
+        return 'Wrong Username or Password'
+    else:
+        session_id = generate_cookie()
+        sessions[session_id] = validate_username 
+        response.set_cookie('session', session_id)
+        redirect_to_root()
+
 
 def generate_cookie():
     return random_string(16)
@@ -55,7 +76,7 @@ def login_required(fn):
 @route('/')
 @login_required
 def root(user):
-    return redirect_to_user(user.id)
+    return redirect_to_user(sessions[request.get_cookie('session')])
 #    if request.get_cookie('squidge'):
 #        return template('LoginPage')
 #    else:
@@ -64,28 +85,45 @@ def root(user):
 
 
 @get('/web/login')
-def login_page():
-    return template('LoginPage') 
+def Either_Or():
+    return template('CreateOrLogin') 
 
 @post('/web/login')
 def login():
     username = request.forms.get('username')
     password = request.forms.get('password')
-    validate_username = usernames.get(username)
+    created_username = request.forms.get('created_username')
+    created_password = request.forms.get('create_password')
+    firstname = request.forms.get('firstname')
+    lastname = request.forms.get('lastname')
+    email  = request.forms.get('email')
+    #update variables with the request.forms.get() for both forms
+        
+    if email  == None:
+        validate_username = usernames.get(username)
 
-    if username ==  None: #explain the not statements we put in last time/ is there a 
-                          #better way to do this if statement?
-        return 'Wrong Username or Password'
-    else:
-        mapped_user_id = usernames[username]
-    if password != users[mapped_user_id]['Password']:
-        return 'Wrong Username or Password'
-    else:
+        if validate_username  ==  None: 
+            return 'Wrong Username or Password'
+        else:
+            mapped_user_id = usernames[username]
+        if password != users[mapped_user_id]['Password']:
+            return 'Wrong Username or Password'
+        else:
+            session_id = generate_cookie()
+            sessions[session_id] = validate_username 
+            response.set_cookie('session', session_id, path='/')
+            redirect_to_root()
+    else: 
+        user_id = generate_number()
+        users[user_id] = {'First Name': firstname, 'Last Name': lastname, 'Email': email,
+                      'Password': password, 'User Name': username}
+        usernames[username] = user_id
         session_id = generate_cookie()
+        sessions[session_id] = user_id 
+        response.set_cookie('session', session_id, path='/')
+ 
+        return redirect('/web/user/{}'.format(user_id))
 
-        sessions[session_id] = validate_username 
-        response.set_cookie('session', session_id)
-        redirect_to_root()
     
 
     # todo(james):
@@ -122,16 +160,13 @@ def create_user_page():
 @get('/web/user/<id:int>')
 def get_user(id):
     
-    validate = users.setdefault(id, [])
+    validate = users.get(id)
     
     if validate == []:
-        del users[id]
         return redirect('/')
     else:
-        return template('UserPage', name=users[id][0], lastname=users[id][1],
-                        email =users[id][2], username=users[id][3]) 
+        return template('UserPage', name=users[id]['First Name'], lastname=users[id]['Last Name'], email =users[id]['Email'], username=users[id]['User Name']) 
 
-    return users[id]
 
     # todone:
     # 1) look up the user in the in-memory dict using the id you got from
@@ -140,39 +175,38 @@ def get_user(id):
     #    the template so you can fill out the template with user information.
     # 3) if not found, return a rendered page that says "user not found" or
     #    whatever.
-    pass
 
 
-@post('/api/user')
-def create_user():
-    
-    firstname = request.forms.get('firstname')
-    lastname = request.forms.get('lastname')
-    email = request.forms.get('email')
-    username = request.forms.get('username')
-    password = request.forms.get('password')
-    user_id = generate_number()
-
-    global users 
-
-    users[user_id] = {'First Name': firstname, 'Last Name': lastname, 'Email': email,
-                      'Password': password}
-    usernames[username] = user_id
-
-#    users.setdefault(user_id, [])
+#@post('/api/user')
+#def create_user():
 #    
-#    for addData in (firstname, lastname, email, username, password):
-#        users[user_id].append(addData)
+#    firstname = request.forms.get('firstname')
+#    lastname = request.forms.get('lastname')
+#    email = request.forms.get('email')
+#    username = request.forms.get('username')
+#    password = request.forms.get('password')
+#    user_id = generate_number()
+#
+#    global users 
+#
+#    users[user_id] = {'First Name': firstname, 'Last Name': lastname, 'Email': email,
+#                      'Password': password, 'User Name': username}
+#    usernames[username] = user_id
+#
+##    users.setdefault(user_id, [])
+##    
+##    for addData in (firstname, lastname, email, username, password):
+##        users[user_id].append(addData)
+##
+#
+#    return redirect('/web/user/' + str(user_id))
+#
+#    # TODONE:
+#    # 1) generate a random id for the new user
+#    # 2) store the new user in some in-memory dict that maps from the id
+#    #    to their user info.
+#    # 3) return a response that redirects the browser to the /web/user/<id>
+#    #    page for that user.
 #
 
-    return redirect('/web/user/' + str(user_id))
-
-    # TODONE:
-    # 1) generate a random id for the new user
-    # 2) store the new user in some in-memory dict that maps from the id
-    #    to their user info.
-    # 3) return a response that redirects the browser to the /web/user/<id>
-    #    page for that user.
-
-
-run(host='localhost', port=8080, debug=True)
+run(host='0.0.0.0', port=8080, debug=True)
