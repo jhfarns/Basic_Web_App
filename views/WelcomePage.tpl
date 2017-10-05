@@ -2,7 +2,7 @@
 
 <html>
     <head>
-        <title>Welcoome To Squindistries</title>
+        <title>Welcome To Squindistries</title>
     </head> 
 
     <body>

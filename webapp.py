@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
-import bottle
-from bottle import run, request, response, template, redirect
+from bottle import run, request, response, template, redirect, post, Bottle
 from collections import namedtuple
-from utils import random_string, random_number
+from utils import random_string 
+from bottle.ext import sqlite
 
-app = bottle.Bottle()
-plugin = bottle.ext.sqlite.Plugin(dbfile='webapp.db')
+
+app = Bottle()
+plugin = sqlite.Plugin(dbfile='webapp.db')
 app.install(plugin)
 
 
@@ -29,48 +30,58 @@ def redirect_to_root():
     return redirect('/')
 
 
-def create_user(db, user):
-    # TODO(james):
-    # 1) insert the new row into the users table.
-    # 2) fill in the id attribute of the user namedtuple with the users id column value
-    # 3) return the modified user namedtuple.
-    pass
+def lookup_user_by_username(db, username):
+    user_row = db.execute(
+        'SELECT id, username, password, email, firstname, lastname FROM users WHERE username=?',
+        (username, )).fetchone()
+    if user_row is None:
+        return None
+
+    return User._make(user_row)
+
+
+def lookup_user_by_id(db, user_id):
+    user_row = db.execute(
+        'SELECT id, username, password, email, firstname, lastname FROM users WHERE id=?',
+        (user_id, )).fetchone()
+    if user_row is None:
+        return None
+
+    return User._make(user_row)
+
+
 
 def lookup_user_by_session_cookie(db, cookie):
-    # TODO(james):
-    # look up the user row where the id column is the same as the
-    # sessions row user_id column and the cookie column value matches the cookie passed into
-    # this function.
-    #
-    # fill out a user namedtuple from the results and return it.
-    pass
+    row = db.execute(
+        'SELECT user_id FROM sessions WHERE cookie=?',
+        (cookie, )).fetchone()
+    if not row:
+        return None
+    return lookup_user_by_id(db, row['user_id'])
+
+
+def create_user(db, user):
+    db.execute('INSERT INTO users (username, password, email, firstname, lastname) VALUES (?,?,?,?,?)',
+               (user.username, user.password, user.email, user.firstname, user.lastname))
+    user._replace(id=update_id["id"])
+    return user
 
 
 def create_user_session(db, user):
-    # TODO(james):
-    # generate a new cookie value (via generate_cookie)
-    # insert a new sessions row, where the user_id column matches the id of the passed in user
-    # and the cookie column matches the generated cookie value.
-    # return the cookie value.
-    pass
+    cookie = generate_cookie()
+
+    db.execute('INSERT INTO sessions (cookie, user_id) VALUES (?, ?)', (cookie, user.id))
+
+    return cookie
 
 
 def login_required(fn):
     def wrapped(db):
-        # TODO(james):
-        # look up user via session cookie
-        # pass user into decorated function
-
-
-        session_id = request.get_cookie("session")
-        if not session_id:
+        cookie = request.get_cookie("session")
+        if not cookie:
             # no cookie; need to authenticate
             return redirect_to_login()
-        user_id = sessions.get(session_id)
-        if not user_id:
-            # session_id isn't valid; need to authenticate
-            return redirect_to_login()
-        user = users.get(user_id)
+        user = lookup_user_by_session_cookie(db, cookie)
         if not user:
             # session does not map to a valid user; need to authenticate
             return redirect_to_login()
@@ -96,6 +107,7 @@ def login_new(db):
     firstname = request.forms.get('firstname')
     lastname = request.forms.get('lastname')
     email  = request.forms.get('email')
+    alldata = username, password, email, firstname, lastname
 
     user = create_user(db, User(id=None,
                                 username=username,
@@ -116,25 +128,15 @@ def login_existing(db):
     username = request.forms.get('username')
     password = request.forms.get('password')
 
-    # TODO(james):
-    # look up the user based on the username
-    # validate the password matches
-    # create a session for the user and return the session cookie
-        
-    user_id = usernames.get(username)
-    if user_id  ==  None: 
-        return 'Wrong Username or Password (1)'
-
-    user = users.get(user_id)
+    user = lookup_user_by_username(db, username)
     if not user:
-        return "Wrong Username or Password (2)"
+        return redirect_to_login()
 
     if password != user.password:
-        return 'Wrong Username or Password (expected {}, got {})'.format(user.password, password)
+        return redirect_to_login()
 
-    session_id = generate_cookie()
-    sessions[session_id] = user_id 
-    response.set_cookie('session', session_id, path='/')
+    cookie = create_user_session(db, user)
+    response.set_cookie('session', cookie, path='/')
     return redirect_to_root()
 
 
@@ -149,5 +151,5 @@ def get_user(db, user):
     return template('UserPage', user=user)
 
 
-if __main__ == '__main__':
+if __name__ == '__main__':
     app.run(host='localhost', port=8080, debug=True)
