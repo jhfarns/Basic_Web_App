@@ -63,8 +63,8 @@ def lookup_user_by_session_cookie(db, cookie):
 def create_user(db, user):
     db.execute('INSERT INTO users (username, password, email, firstname, lastname) VALUES (?,?,?,?,?)',
                (user.username, user.password, user.email, user.firstname, user.lastname))
-    user._replace(id=update_id["id"])
-    return user
+    newUser = lookup_user_by_username(db, user.username)
+    return newUser
 
 
 def create_user_session(db, user):
