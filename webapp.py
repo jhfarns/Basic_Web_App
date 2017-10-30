@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from bottle import run, request, response, template, redirect, post, Bottle
+from bottle import run, request, response, template, redirect, post, Bottle, delete
 from collections import namedtuple
 from utils import random_string 
 from bottle.ext import sqlite
@@ -150,6 +150,13 @@ def create_user_page():
 def get_user(db, user):
     return template('UserPage', user=user)
 
+@app.get('/web/logout')
+@login_required
+def logout(db, user):
+    cookie = request.get_cookie('session')
+    response.delete_cookie('session', path='/') 
+    db.execute('DELETE FROM sessions WHERE cookie=?', (cookie, ))
+    return redirect('/') 
 
 if __name__ == '__main__':
     app.run(host='localhost', port=8080, debug=True)
