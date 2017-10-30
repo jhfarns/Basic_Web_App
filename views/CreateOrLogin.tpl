@@ -4,6 +4,9 @@
 		<title>Squindistries Welcome Back Page</title>
 	</head>
 	<body>
+        <form action=/web/logout>
+            <input type=submit value='Logout'/>
+        </form>
 		<h1>Squidge is happy to see you again!</h1>
 		<form action = '/web/login/existing' method='post'>
 			<fieldset>
