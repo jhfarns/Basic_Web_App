@@ -148,7 +148,7 @@ def create_user_page():
 @app.get('/web/user')
 @login_required
 def get_user(db, user):
-    return template('UserPage', user=user)
+    return template('Editable UserPage', user=user)
 
 @app.get('/web/logout')
 @login_required
@@ -157,6 +157,19 @@ def logout(db, user):
     response.delete_cookie('session', path='/') 
     db.execute('DELETE FROM sessions WHERE cookie=?', (cookie, ))
     return redirect('/') 
+
+@app.post('/web/update')
+@login_required
+def updatesql(db, user):
+    username = request.forms.get('username')
+    firstname = request.forms.get('firstname')
+    lastname = request.forms.get('lastname')
+    email  = request.forms.get('email')
+    
+    db.execute('UPDATE users SET username=?, firstname=?, lastname=?, email=? WHERE username = ?', (username, firstname, lastname, email, user.username))
+    
+    return redirect_to_root()
+
 
 if __name__ == '__main__':
     app.run(host='localhost', port=8080, debug=True)
