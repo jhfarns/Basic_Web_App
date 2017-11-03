@@ -18,6 +18,8 @@
 				<input type = 'submit' value ='submit'>
 			</fieldset>
 		</form> <br>
+        <a href='/web/forgotpassword'>Did you for get your password?</a> 
+
 
 		<h1>You haven't met Squidge yet!? Fill out the form below to sign up!</h1>
 		<form action="/web/login/new" method="post">

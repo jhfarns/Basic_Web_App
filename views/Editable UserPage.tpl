@@ -5,6 +5,9 @@
     </head>
 
     <body>
+        <form action=/web/logout>
+            <input type=submit value='Logout'/>
+        </form>
         <form action=/web/update method=post>
             <h1>Here is your account information:</h1><br><br>
             <button type=button onclick="var inputs = document.getElementsByClassName('field');

@@ -4,6 +4,8 @@ from bottle import run, request, response, template, redirect, post, Bottle, del
 from collections import namedtuple
 from utils import random_string 
 from bottle.ext import sqlite
+from smtplib import SMTP
+from email.message import EmailMessage
 
 
 app = Bottle()
@@ -88,6 +90,29 @@ def login_required(fn):
         return fn(db, user)
     return wrapped
 
+def sendemail(email):
+    cookie = generate_cookie()
+    s = SMTP(host='smtp.gmail.com', port=587)
+    s.starttls()
+    s.login('test97867786@gmail.com', 'abc1234!')
+
+    msg = EmailMessage()
+    msg.set_content('Here is your unique code {}, please got to http://localhost:8080/web/passwordreset'.format(cookie))
+
+
+    msg['From']='Your friendly neighborhood Spider-Man'
+    msg['To']= email
+    msg['Subject']='Password Reset Email'
+
+    s.send_message(msg)
+
+    s.quit()
+    return cookie
+
+def updateresets(db, cookie, email):
+    db.execute('INSERT INTO resets (cookie, email) values(?,?)', (cookie, email))
+    
+
 
 @app.route('/')
 @login_required
@@ -137,6 +162,7 @@ def login_existing(db):
 
     cookie = create_user_session(db, user)
     response.set_cookie('session', cookie, path='/')
+    db.execute('DELETE FROM resets WHERE email=?', (user.email, ))
     return redirect_to_root()
 
 
@@ -169,6 +195,31 @@ def updatesql(db, user):
     db.execute('UPDATE users SET username=?, firstname=?, lastname=?, email=? WHERE username = ?', (username, firstname, lastname, email, user.username))
     
     return redirect_to_root()
+@app.get('/web/forgotpassword')
+def queryemail():
+    return template('forgotpassword')
+
+@app.post('/web/sendpassemail')
+def email(db):
+    email=request.forms.get('email')
+    cookie = sendemail(email)
+
+    updateresets(db,cookie,email) 
+    return template('inputpass')
+
+@app.post('/web/inputpass')
+def inputpass(db):
+    cookie=request.forms.get('cookie')
+    password=request.forms.get('password')
+    
+    sqlcookie = db.execute('SELECT cookie,email FROM resets WHERE cookie=?', (cookie,)).fetchone()
+    print(sqlcookie) 
+    if not sqlcookie:
+        return redirect_to_root()
+
+    db.execute('UPDATE users SET password=? WHERE email=?', (password,sqlcookie['email']))
+    return redirect_to_root()
+
 
 
 if __name__ == '__main__':
